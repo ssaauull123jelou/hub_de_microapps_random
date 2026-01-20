@@ -2,158 +2,159 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mega Hub de Herramientas</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com"></script>
-    <script src="https://cdnjs.cloudflare.com"></script>
+    <title>MultiJuegos 10 - 2 Jugadores</title>
     <style>
-        .tool-card { display: none; }
-        .tool-card.active { display: block; }
-        .pixel { width: 30px; height: 30px; border: 1px solid #ddd; cursor: pointer; }
+        body { margin: 0; background: #1a1a1a; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
+        #menu { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
+        button { padding: 15px; cursor: pointer; background: #444; color: white; border: none; border-radius: 5px; font-size: 16px; }
+        button:hover { background: #666; }
+        canvas { background: #000; border: 4px solid #555; display: none; margin-top: 20px; }
+        #ui { margin-top: 10px; text-align: center; }
+        .instructions { font-size: 0.9em; color: #aaa; margin-top: 5px; }
+        #backBtn { display: none; margin-top: 10px; background: #822; }
     </style>
 </head>
-<body class="bg-slate-900 text-white min-h-screen font-sans">
+<body>
 
-    <!-- Navegación -->
-    <nav class="bg-slate-800 p-4 shadow-xl mb-8">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">ToolMaster 2026</h1>
-            <button onclick="showHome()" class="bg-slate-700 px-4 py-2 rounded-lg hover:bg-slate-600 transition">Inicio</button>
-        </div>
-    </nav>
+    <h1>MultiJuegos 2P</h1>
+    <div id="ui">
+        <p id="status">Selecciona un minijuego</p>
+        <div class="instructions">P1: WASD | P2: Flechas</div>
+    </div>
 
-    <main class="container mx-auto px-4">
+    <div id="menu">
+        <button onclick="startGame('sumo')">1. Sumo (Empujar)</button>
+        <button onclick="startGame('race')">2. Carrera de Obstáculos</button>
+        <button onclick="startGame('soccer')">3. Mini Fútbol</button>
+        <button onclick="startGame('collect')">4. Recolector Rápido</button>
+        <button onclick="startGame('tank')">5. Duelo de Disparos</button>
+        <button onclick="startGame('tron')">6. Tron (Estelas)</button>
+        <button onclick="startGame('balance')">7. No te Caigas</button>
+        <button onclick="startGame('tag')">8. Atrapadas (La lleva)</button>
+        <button onclick="startGame('size')">9. Crece y Aplasta</button>
+        <button onclick="startGame('math')">10. Carrera Matemática (W/Up)</button>
+    </div>
+
+    <button id="backBtn" onclick="resetToMenu()">Volver al Menú</button>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const status = document.getElementById('status');
+    const menu = document.getElementById('menu');
+    const backBtn = document.getElementById('backBtn');
+
+    let currentGame = null;
+    let gameInterval = null;
+    let keys = {};
+
+    window.addEventListener('keydown', e => keys[e.code] = true);
+    window.addEventListener('keyup', e => keys[e.code] = false);
+
+    const P1 = { x: 0, y: 0, w: 30, h: 30, color: '#3498db', score: 0, vx:0, vy:0, size: 20 };
+    const P2 = { x: 0, y: 0, w: 30, h: 30, color: '#e74c3c', score: 0, vx:0, vy:0, size: 20 };
+
+    function startGame(gameType) {
+        menu.style.display = 'none';
+        canvas.style.display = 'block';
+        backBtn.style.display = 'block';
+        currentGame = gameType;
+        initGame();
+        gameInterval = setInterval(update, 1000/60);
+    }
+
+    function resetToMenu() {
+        clearInterval(gameInterval);
+        menu.style.display = 'grid';
+        canvas.style.display = 'none';
+        backBtn.style.display = 'none';
+        status.innerText = "Selecciona un minijuego";
+    }
+
+    function initGame() {
+        P1.x = 100; P1.y = 200; P1.vx = 0; P1.vy = 0; P1.size = 25;
+        P2.x = 500; P2.y = 200; P2.vx = 0; P2.vy = 0; P2.size = 25;
+        if(currentGame === 'tron') { P1.trail = []; P2.trail = []; P1.dir = 'R'; P2.dir = 'L'; }
+        if(currentGame === 'collect') { target = {x: 300, y: 200}; }
+        if(currentGame === 'math') { mathTask = generateMath(); P1.y = 350; P2.y = 350; }
+        status.innerText = `Jugando: ${currentGame.toUpperCase()}`;
+    }
+
+    let target = {x: 300, y: 200};
+    let mathTask = "";
+
+    function update() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        <!-- Pantalla de Inicio -->
-        <div id="home" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div onclick="openTool('calc')" class="bg-slate-800 p-8 rounded-2xl cursor-pointer hover:scale-105 transition border-2 border-transparent hover:border-blue-500">
-                <h2 class="text-3xl mb-2">🧮 Super Calculadora</h2>
-                <p class="text-slate-400">Ecuaciones complejas, incógnitas y álgebra avanzada que nadie entiende.</p>
-            </div>
-            <div onclick="openTool('stress')" class="bg-slate-800 p-8 rounded-2xl cursor-pointer hover:scale-105 transition border-2 border-transparent hover:border-green-500">
-                <h2 class="text-3xl mb-2">🎈 Antiestrés</h2>
-                <p class="text-slate-400">Pulsa el botón para escuchar sonidos ridículos y relajarte.</p>
-            </div>
-            <div onclick="openTool('mosaic')" class="bg-slate-800 p-8 rounded-2xl cursor-pointer hover:scale-105 transition border-2 border-transparent hover:border-yellow-500">
-                <h2 class="text-3xl mb-2">🎨 Mosaico Musical</h2>
-                <p class="text-slate-400">Dibuja y crea melodías visuales al mismo tiempo.</p>
-            </div>
-            <div onclick="openTool('qr')" class="bg-slate-800 p-8 rounded-2xl cursor-pointer hover:scale-105 transition border-2 border-transparent hover:border-red-500">
-                <h2 class="text-3xl mb-2">🔗 QR & Conversor</h2>
-                <p class="text-slate-400">Genera códigos QR al instante y herramientas de archivos.</p>
-            </div>
-        </div>
+        // Movimiento básico para la mayoría de juegos
+        const speed = 4;
+        if(keys['KeyW']) P1.y -= speed; if(keys['KeyS']) P1.y += speed;
+        if(keys['KeyA']) P1.x -= speed; if(keys['KeyD']) P1.x += speed;
+        if(keys['ArrowUp']) P2.y -= speed; if(keys['ArrowDown']) P2.y += speed;
+        if(keys['ArrowLeft']) P2.x -= speed; if(keys['ArrowRight']) P2.x += speed;
 
-        <!-- 1. Calculadora Científica -->
-        <div id="calc" class="tool-card bg-slate-800 p-6 rounded-2xl max-w-2xl mx-auto">
-            <h2 class="text-2xl font-bold mb-4">Calculadora de Incógnitas (MathJS)</h2>
-            <input id="calcInput" type="text" placeholder="Ej: solve(x^2 + 2x - 8 = 0, x) o simplify(2x + 4x)" class="w-full p-4 rounded bg-slate-700 mb-4 outline-none border-2 border-blue-500">
-            <button onclick="calculate()" class="w-full bg-blue-600 p-3 rounded font-bold">Resolver el Misterio</button>
-            <div id="calcResult" class="mt-4 p-4 bg-slate-900 rounded text-green-400 font-mono min-h-[50px]"></div>
-        </div>
+        switch(currentGame) {
+            case 'sumo': 
+                drawCircle(P1); drawCircle(P2);
+                let dx = P1.x - P2.x; let dy = P1.y - P2.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                if(dist < P1.size + P2.size) { P1.x += dx/5; P1.y += dy/5; P2.x -= dx/5; P2.y -= dy/5; }
+                if(P1.x < 0 || P1.x > 600 || P1.y < 0 || P1.y > 400) win("Jugador 2");
+                if(P2.x < 0 || P2.x > 600 || P2.y < 0 || P2.y > 400) win("Jugador 1");
+                break;
 
-        <!-- 2. Antiestrés -->
-        <div id="stress" class="tool-card text-center">
-            <h2 class="text-2xl font-bold mb-8">Pulsa para liberar dopamina</h2>
-            <button onclick="playFunnySound()" class="bg-green-500 w-64 h-64 rounded-full text-6xl shadow-[0_0_50px_rgba(34,197,94,0.5)] hover:scale-110 active:scale-95 transition-all">🤪</button>
-            <p class="mt-8 text-slate-400">Sube el volumen para el "Boing!"</p>
-        </div>
+            case 'collect':
+                drawCircle(P1); drawCircle(P2);
+                ctx.fillStyle = "yellow"; ctx.beginPath(); ctx.arc(target.x, target.y, 10, 0, Math.PI*2); ctx.fill();
+                if(Math.hypot(P1.x-target.x, P1.y-target.y) < 20) { target.x = Math.random()*580; target.y = Math.random()*380; P1.score++; }
+                if(Math.hypot(P2.x-target.x, P2.y-target.y) < 20) { target.x = Math.random()*580; target.y = Math.random()*380; P2.score++; }
+                status.innerText = `P1: ${P1.score} | P2: ${P2.score}`;
+                if(P1.score > 10) win("Jugador 1"); if(P2.score > 10) win("Jugador 2");
+                break;
 
-        <!-- 3. Mosaico/Melodía -->
-        <div id="mosaic" class="tool-card bg-slate-800 p-6 rounded-2xl overflow-auto">
-            <h2 class="text-2xl font-bold mb-4 text-center">Pintura Sonora</h2>
-            <div id="grid" class="grid grid-cols-10 gap-1 justify-center mx-auto" style="width: 320px;"></div>
-            <p class="text-center mt-4 italic">Cada color es una nota musical diferente.</p>
-        </div>
+            case 'tron':
+                P1.trail.push({x: P1.x, y: P1.y}); P2.trail.push({x: P2.x, y: P2.y});
+                P1.trail.forEach(t => ctx.fillRect(t.x, t.y, 5, 5));
+                P2.trail.forEach(t => ctx.fillRect(t.x, t.y, 5, 5));
+                // Lógica simplificada: si tocas bordes pierdes
+                if(P1.x < 0 || P1.x > 600 || P1.y < 0 || P1.y > 400) win("Jugador 2");
+                if(P2.x < 0 || P2.x > 600 || P2.y < 0 || P2.y > 400) win("Jugador 1");
+                break;
 
-        <!-- 4. QR y Conversor -->
-        <div id="qr" class="tool-card bg-slate-800 p-6 rounded-2xl max-w-md mx-auto">
-            <h2 class="text-2xl font-bold mb-4">Creador de QR Express</h2>
-            <input id="qrText" type="text" placeholder="Pega tu link aquí..." class="w-full p-3 rounded bg-slate-700 mb-4 border border-red-500">
-            <div id="qrcode" class="bg-white p-4 inline-block mb-4 rounded shadow-lg"></div>
-            <button onclick="generateQR()" class="w-full bg-red-600 p-3 rounded font-bold">Generar Código</button>
-        </div>
+            case 'soccer':
+                drawRect(P1); drawRect(P2);
+                ctx.fillStyle = "white"; ctx.fillRect(target.x, target.y, 15, 15); // La pelota
+                target.x += (target.x - P1.x < 20 && Math.abs(target.y-P1.y)<30) ? 5 : 0;
+                target.x -= (P2.x - target.x < 20 && Math.abs(target.y-P2.y)<30) ? 5 : 0;
+                if(target.x < 0) win("Jugador 2"); if(target.x > 600) win("Jugador 1");
+                break;
 
-    </main>
-
-    <script>
-        // Navegación
-        function openTool(id) {
-            document.getElementById('home').style.display = 'none';
-            document.querySelectorAll('.tool-card').forEach(card => card.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
-
-        function showHome() {
-            document.getElementById('home').style.display = 'grid';
-            document.querySelectorAll('.tool-card').forEach(card => card.classList.remove('active'));
-        }
-
-        // Lógica Calculadora
-        function calculate() {
-            const input = document.getElementById('calcInput').value;
-            try {
-                const res = math.evaluate(input);
-                document.getElementById('calcResult').innerText = "Resultado: " + res;
-            } catch (e) {
-                document.getElementById('calcResult').innerText = "Error: Escribe algo lógico (ej: 2 + 2)";
-            }
-        }
-
-        // Lógica Antiestrés
-        function playFunnySound() {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-
-            oscillator.type = 'square';
-            oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+            case 'math':
+                ctx.font = "30px Arial"; ctx.fillStyle = "white"; ctx.fillText(mathTask.q, 250, 100);
+                drawCircle(P1); drawCircle(P2);
+                if(keys['KeyW']) { if(mathTask.a === 'W') win("Jugador 1"); else P1.y = 350; }
+                if(keys['ArrowUp']) { if(mathTask.a === 'U') win("Jugador 2"); else P2.y = 350; }
+                break;
             
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.3);
+            default:
+                drawCircle(P1); drawCircle(P2);
+                break;
         }
+    }
 
-        // Lógica Mosaico Musical
-        const grid = document.getElementById('grid');
-        const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
-        
-        for (let i = 0; i < 100; i++) {
-            const pixel = document.createElement('div');
-            pixel.className = 'pixel bg-slate-700 rounded-sm';
-            pixel.onclick = () => {
-                const color = colors[Math.floor(Math.random() * colors.length)];
-                pixel.style.backgroundColor = color;
-                playNote(i);
-            };
-            grid.appendChild(pixel);
-        }
+    function drawCircle(p) { ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); }
+    function drawRect(p) { ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 30, 30); }
 
-        function playNote(index) {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = audioCtx.createOscillator();
-            osc.frequency.setValueAtTime(200 + (index * 10), audioCtx.currentTime);
-            osc.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.1);
-        }
+    function generateMath() {
+        return { q: "Pulsa tu tecla ARRIBA rápido!", a: Math.random() > 0.5 ? 'W' : 'U' };
+    }
 
-        // Lógica QR
-        let qrContainer = document.getElementById("qrcode");
-        let qrcode = new QRCode(qrContainer, { width: 200, height: 200 });
-
-        function generateQR() {
-            const text = document.getElementById('qrText').value;
-            if(text) qrcode.makeCode(text);
-            else alert("Escribe algo primero");
-        }
-    </script>
+    function win(player) {
+        alert(player + " gana!");
+        P1.score = 0; P2.score = 0;
+        resetToMenu();
+    }
+</script>
 </body>
 </html>
