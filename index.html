@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mega Hub de Herramientas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com"></script>
+    <script src="https://cdnjs.cloudflare.com"></script>
+    <style>
+        .tool-card { display: none; }
+        .tool-card.active { display: block; }
+        .pixel { width: 30px; height: 30px; border: 1px solid #ddd; cursor: pointer; }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen font-sans">
+
+    <!-- Navegación -->
+    <nav class="bg-slate-800 p-4 shadow-xl mb-8">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">ToolMaster 2026</h1>
+            <button onclick="showHome()" class="bg-slate-700 px-4 py-2 rounded-lg hover:bg-slate-600 transition">Inicio</button>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4">
+        
+        <!-- Pantalla de Inicio -->
+        <div id="home" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div onclick="openTool('calc')" class="bg-slate-800 p-8 rounded-2xl cursor-pointer hover:scale-105 transition border-2 border-transparent hover:border-blue-500">
+                <h2 class="text-3xl mb-2">🧮 Super Calculadora</h2>
+                <p class="text-slate-400">Ecuaciones complejas, incógnitas y álgebra avanzada que nadie entiende.</p>
+            </div>
+            <div onclick="openTool('stress')" class="bg-slate-800 p-8 rounded-2xl cursor-pointer hover:scale-105 transition border-2 border-transparent hover:border-green-500">
+                <h2 class="text-3xl mb-2">🎈 Antiestrés</h2>
+                <p class="text-slate-400">Pulsa el botón para escuchar sonidos ridículos y relajarte.</p>
+            </div>
+            <div onclick="openTool('mosaic')" class="bg-slate-800 p-8 rounded-2xl cursor-pointer hover:scale-105 transition border-2 border-transparent hover:border-yellow-500">
+                <h2 class="text-3xl mb-2">🎨 Mosaico Musical</h2>
+                <p class="text-slate-400">Dibuja y crea melodías visuales al mismo tiempo.</p>
+            </div>
+            <div onclick="openTool('qr')" class="bg-slate-800 p-8 rounded-2xl cursor-pointer hover:scale-105 transition border-2 border-transparent hover:border-red-500">
+                <h2 class="text-3xl mb-2">🔗 QR & Conversor</h2>
+                <p class="text-slate-400">Genera códigos QR al instante y herramientas de archivos.</p>
+            </div>
+        </div>
+
+        <!-- 1. Calculadora Científica -->
+        <div id="calc" class="tool-card bg-slate-800 p-6 rounded-2xl max-w-2xl mx-auto">
+            <h2 class="text-2xl font-bold mb-4">Calculadora de Incógnitas (MathJS)</h2>
+            <input id="calcInput" type="text" placeholder="Ej: solve(x^2 + 2x - 8 = 0, x) o simplify(2x + 4x)" class="w-full p-4 rounded bg-slate-700 mb-4 outline-none border-2 border-blue-500">
+            <button onclick="calculate()" class="w-full bg-blue-600 p-3 rounded font-bold">Resolver el Misterio</button>
+            <div id="calcResult" class="mt-4 p-4 bg-slate-900 rounded text-green-400 font-mono min-h-[50px]"></div>
+        </div>
+
+        <!-- 2. Antiestrés -->
+        <div id="stress" class="tool-card text-center">
+            <h2 class="text-2xl font-bold mb-8">Pulsa para liberar dopamina</h2>
+            <button onclick="playFunnySound()" class="bg-green-500 w-64 h-64 rounded-full text-6xl shadow-[0_0_50px_rgba(34,197,94,0.5)] hover:scale-110 active:scale-95 transition-all">🤪</button>
+            <p class="mt-8 text-slate-400">Sube el volumen para el "Boing!"</p>
+        </div>
+
+        <!-- 3. Mosaico/Melodía -->
+        <div id="mosaic" class="tool-card bg-slate-800 p-6 rounded-2xl overflow-auto">
+            <h2 class="text-2xl font-bold mb-4 text-center">Pintura Sonora</h2>
+            <div id="grid" class="grid grid-cols-10 gap-1 justify-center mx-auto" style="width: 320px;"></div>
+            <p class="text-center mt-4 italic">Cada color es una nota musical diferente.</p>
+        </div>
+
+        <!-- 4. QR y Conversor -->
+        <div id="qr" class="tool-card bg-slate-800 p-6 rounded-2xl max-w-md mx-auto">
+            <h2 class="text-2xl font-bold mb-4">Creador de QR Express</h2>
+            <input id="qrText" type="text" placeholder="Pega tu link aquí..." class="w-full p-3 rounded bg-slate-700 mb-4 border border-red-500">
+            <div id="qrcode" class="bg-white p-4 inline-block mb-4 rounded shadow-lg"></div>
+            <button onclick="generateQR()" class="w-full bg-red-600 p-3 rounded font-bold">Generar Código</button>
+        </div>
+
+    </main>
+
+    <script>
+        // Navegación
+        function openTool(id) {
+            document.getElementById('home').style.display = 'none';
+            document.querySelectorAll('.tool-card').forEach(card => card.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function showHome() {
+            document.getElementById('home').style.display = 'grid';
+            document.querySelectorAll('.tool-card').forEach(card => card.classList.remove('active'));
+        }
+
+        // Lógica Calculadora
+        function calculate() {
+            const input = document.getElementById('calcInput').value;
+            try {
+                const res = math.evaluate(input);
+                document.getElementById('calcResult').innerText = "Resultado: " + res;
+            } catch (e) {
+                document.getElementById('calcResult').innerText = "Error: Escribe algo lógico (ej: 2 + 2)";
+            }
+        }
+
+        // Lógica Antiestrés
+        function playFunnySound() {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // Lógica Mosaico Musical
+        const grid = document.getElementById('grid');
+        const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+        
+        for (let i = 0; i < 100; i++) {
+            const pixel = document.createElement('div');
+            pixel.className = 'pixel bg-slate-700 rounded-sm';
+            pixel.onclick = () => {
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                pixel.style.backgroundColor = color;
+                playNote(i);
+            };
+            grid.appendChild(pixel);
+        }
+
+        function playNote(index) {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            osc.frequency.setValueAtTime(200 + (index * 10), audioCtx.currentTime);
+            osc.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        // Lógica QR
+        let qrContainer = document.getElementById("qrcode");
+        let qrcode = new QRCode(qrContainer, { width: 200, height: 200 });
+
+        function generateQR() {
+            const text = document.getElementById('qrText').value;
+            if(text) qrcode.makeCode(text);
+            else alert("Escribe algo primero");
+        }
+    </script>
+</body>
+</html>
